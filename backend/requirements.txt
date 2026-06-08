@@ -1,0 +1,28 @@
+# ── Core framework ─────────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9          # Required for Form/File parsing in FastAPI
+
+# ── Settings ───────────────────────────────────────────────────────────────────
+pydantic==2.7.1
+pydantic-settings==2.2.1
+python-dotenv==1.0.1             # For bot config loading
+
+# ── Supabase ───────────────────────────────────────────────────────────────────
+supabase==2.4.3
+
+# ── Google Gemini ──────────────────────────────────────────────────────────────
+google-generativeai==0.5.4
+
+# ── HTTP client (for Nominatim geocoding + bot API client) ────────────────────
+httpx==0.27.0
+
+# ── Cloudinary (optional fallback storage) ────────────────────────────────────
+cloudinary==1.40.0
+
+# ── Telegram Bot ───────────────────────────────────────────────────────────────
+python-telegram-bot==21.3
+
+# ── Testing ────────────────────────────────────────────────────────────────────
+pytest==8.2.0
+pytest-asyncio==0.23.6
