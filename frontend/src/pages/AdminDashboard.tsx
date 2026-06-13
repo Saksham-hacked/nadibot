@@ -9,7 +9,7 @@ import StatsCard from '../components/dashboard/StatsCard'
 import CategoryChart from '../components/dashboard/CategoryChart'
 import TrendChart from '../components/dashboard/TrendChart'
 import IncidentTable from '../components/dashboard/IncidentTable'
-import { Spinner } from '../components/ui/Spinner'
+import Spinner from '../components/ui/Spinner'
 import { formatPercent, formatHours } from '../utils/formatters'
 
 export default function AdminDashboard() {
@@ -45,7 +45,56 @@ export default function AdminDashboard() {
     ],
   })
 
-  const loading = overviewQ.isLoading || categoriesQ.isLoading || trendsQ.isLoading
+  // ── Debug logging ────────────────────────────────────────────────────────
+  useEffect(() => {
+    console.log('[AdminDashboard] adminKey present:', !!adminKey)
+  }, [adminKey])
+
+  useEffect(() => {
+    console.log('[AdminDashboard] overviewQ  →', {
+      status: overviewQ.status,
+      isLoading: overviewQ.isLoading,
+      isError: overviewQ.isError,
+      error: overviewQ.error,
+      data: overviewQ.data,
+    })
+  }, [overviewQ.status, overviewQ.data, overviewQ.error])
+
+  useEffect(() => {
+    console.log('[AdminDashboard] categoriesQ →', {
+      status: categoriesQ.status,
+      isLoading: categoriesQ.isLoading,
+      isError: categoriesQ.isError,
+      error: categoriesQ.error,
+      data: categoriesQ.data,
+      'data.categories': categoriesQ.data?.categories,
+    })
+  }, [categoriesQ.status, categoriesQ.data, categoriesQ.error])
+
+  useEffect(() => {
+    console.log('[AdminDashboard] trendsQ    →', {
+      status: trendsQ.status,
+      isLoading: trendsQ.isLoading,
+      isError: trendsQ.isError,
+      error: trendsQ.error,
+      data: trendsQ.data,
+      complaintsLen: trendsQ.data?.complaints?.length,
+      incidentsLen:  trendsQ.data?.incidents?.length,
+    })
+  }, [trendsQ.status, trendsQ.data, trendsQ.error])
+
+  useEffect(() => {
+    console.log('[AdminDashboard] incidentsQ →', {
+      status: incidentsQ.status,
+      isLoading: incidentsQ.isLoading,
+      isError: incidentsQ.isError,
+      error: incidentsQ.error,
+      data: incidentsQ.data,
+    })
+  }, [incidentsQ.status, incidentsQ.data, incidentsQ.error])
+  // ────────────────────────────────────────────────────────────────────────
+
+  const anyLoading = overviewQ.isLoading || categoriesQ.isLoading || trendsQ.isLoading || incidentsQ.isLoading
 
   return (
     <AppShell>
@@ -55,7 +104,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-slate-500 mt-1">Overview of complaints and incidents across Uttarakhand.</p>
         </div>
 
-        {loading && (
+        {anyLoading && (
           <div className="flex justify-center py-8">
             <Spinner />
           </div>
@@ -76,12 +125,23 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {categoriesQ.data && trendsQ.data && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CategoryChart data={categoriesQ.data.categories} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {categoriesQ.isError ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex items-center justify-center h-[290px] text-sm text-slate-400">
+              Failed to load category data.
+            </div>
+          ) : (
+            <CategoryChart data={categoriesQ.data?.categories ?? []} />
+          )}
+
+          {trendsQ.isError ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex items-center justify-center h-[290px] text-sm text-slate-400">
+              Failed to load trends data.
+            </div>
+          ) : trendsQ.data ? (
             <TrendChart data={trendsQ.data} />
-          </div>
-        )}
+          ) : null}
+        </div>
 
         {incidentsQ.data && (
           <div>

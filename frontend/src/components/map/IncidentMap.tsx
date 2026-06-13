@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
-import { useState } from 'react'
+import { useState, Component } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getGeospatialData } from '../../api/analytics'
 import MarkerPopup from './MarkerPopup'
@@ -9,12 +9,31 @@ import type { Category, Severity, IncidentStatus } from '../../types/common'
 import { MAP_CENTER, MAP_ZOOM_DEFAULT, SEVERITY_COLORS, CATEGORIES, SEVERITIES, COMPLAINT_STATUSES } from '../../utils/constants'
 import { STATUS_LABELS } from '../../types/common'
 
+// Simple error boundary to prevent map crash from bubbling up
+class MapErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+          Map failed to load. Please refresh.
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export default function IncidentMap() {
   const [categoryFilter, setCategoryFilter] = useState<Category | 'All'>('All')
   const [severityFilter, setSeverityFilter] = useState<Severity | 'All'>('All')
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | 'All'>('All')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['geospatial'],
     queryFn: getGeospatialData,
   })
@@ -55,6 +74,7 @@ export default function IncidentMap() {
           {COMPLAINT_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
         </select>
         {isLoading && <Spinner size="sm" />}
+        {isError && <span className="text-xs text-red-500 self-center">Failed to load incidents</span>}
         <span className="text-xs text-slate-500 self-center ml-auto">
           {incidents.length} incident(s) shown
         </span>
@@ -62,31 +82,33 @@ export default function IncidentMap() {
 
       {/* Map */}
       <div className="flex-1">
-        <MapContainer
-          center={MAP_CENTER}
-          zoom={MAP_ZOOM_DEFAULT}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-          {incidents.map((inc) => (
-            <CircleMarker
-              key={inc.incident_id}
-              center={[inc.latitude, inc.longitude]}
-              radius={8 + Math.min(inc.complaint_count * 2, 16)}
-              pathOptions={{
-                fillColor: SEVERITY_COLORS[inc.severity],
-                color: SEVERITY_COLORS[inc.severity],
-                fillOpacity: 0.8,
-                weight: 1,
-              }}
-            >
-              <MarkerPopup incident={inc} />
-            </CircleMarker>
-          ))}
-        </MapContainer>
+        <MapErrorBoundary>
+          <MapContainer
+            center={MAP_CENTER}
+            zoom={MAP_ZOOM_DEFAULT}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
+            {incidents.map((inc) => (
+              <CircleMarker
+                key={inc.incident_id}
+                center={[inc.latitude, inc.longitude]}
+                radius={8 + Math.min(inc.complaint_count * 2, 16)}
+                pathOptions={{
+                  fillColor: SEVERITY_COLORS[inc.severity],
+                  color: SEVERITY_COLORS[inc.severity],
+                  fillOpacity: 0.8,
+                  weight: 1,
+                }}
+              >
+                <MarkerPopup key={`popup-${inc.incident_id}`} incident={inc} />
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        </MapErrorBoundary>
       </div>
 
       {/* Legend */}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
@@ -14,17 +15,37 @@ interface MergedPoint {
 }
 
 function formatLabel(dateStr: string): string {
+  if (!dateStr) return ''
   const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
   return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
 }
 
 export default function TrendChart({ data }: TrendChartProps) {
+  useEffect(() => {
+    console.log('[TrendChart] received data prop:', data)
+    if (!data) {
+      console.warn('[TrendChart] ⚠ data is null/undefined.')
+      return
+    }
+    console.log('[TrendChart] complaints array:', data.complaints)
+    console.log('[TrendChart] incidents  array:', data.incidents)
+    if (!Array.isArray(data.complaints)) {
+      console.error('[TrendChart] ✗ data.complaints is NOT an array — this will cause "No data available". Value:', data.complaints)
+    }
+    if (!Array.isArray(data.incidents)) {
+      console.error('[TrendChart] ✗ data.incidents  is NOT an array — this will cause "No data available". Value:', data.incidents)
+    }
+  }, [data])
+
+  if (!data) return null
+
   const dateMap = new Map<string, MergedPoint>()
 
-  data?.complaints?.forEach(({ date, count }) => {
+  data.complaints?.forEach(({ date, count }) => {
     dateMap.set(date, { date, Complaints: count, Incidents: 0 })
   })
-  data?.incidents?.forEach(({ date, count }) => {
+  data.incidents?.forEach(({ date, count }) => {
     const existing = dateMap.get(date)
     if (existing) existing.Incidents = count
     else dateMap.set(date, { date, Complaints: 0, Incidents: count })
@@ -34,9 +55,25 @@ export default function TrendChart({ data }: TrendChartProps) {
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((pt) => ({ ...pt, date: formatLabel(pt.date) }))
 
+  useEffect(() => {
+    console.log(`[TrendChart] merged series (${merged.length} pts):`, merged)
+    if (merged.length === 0) {
+      console.warn('[TrendChart] ⚠ merged is empty — "No data available" will render.')
+    }
+  }, [merged.length])
+
+  if (merged.length === 0) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-700 mb-4">Trend (last {data.range})</h3>
+        <div className="flex items-center justify-center h-[220px] text-sm text-slate-400">No data available</div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Trend (last {data?.range})</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-4">Trend (last {data.range})</h3>
       <ResponsiveContainer width="100%" height={220}>
         <LineChart data={merged} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
           <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} interval="preserveStartEnd" />

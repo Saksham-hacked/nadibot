@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import type { CategoryCount } from '../../types/analytics'
 
@@ -6,6 +7,24 @@ interface CategoryChartProps {
 }
 
 export default function CategoryChart({ data }: CategoryChartProps) {
+  useEffect(() => {
+    console.log('[CategoryChart] received data prop:', data)
+    if (!data || data.length === 0) {
+      console.warn('[CategoryChart] ⚠ data is empty or undefined — "No data available" will render.')
+    } else {
+      console.log(`[CategoryChart] ✓ ${data.length} categories to render:`, data.map(d => `${d.category}=${d.count}`).join(', '))
+    }
+  }, [data])
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-700 mb-4">Complaints by Category</h3>
+        <div className="flex items-center justify-center h-[220px] text-sm text-slate-400">No data available</div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
       <h3 className="text-sm font-semibold text-slate-700 mb-4">Complaints by Category</h3>
