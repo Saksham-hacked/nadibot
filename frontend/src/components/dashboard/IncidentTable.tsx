@@ -1,6 +1,6 @@
 import type { Incident } from '../../types/incident'
 import StatusBadge from './StatusBadge'
-import { formatDate, truncateId } from '../../utils/formatters'
+import { truncateId } from '../../utils/formatters'
 
 interface IncidentTableProps {
   incidents: Incident[]
