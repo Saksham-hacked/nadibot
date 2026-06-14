@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     API_BASE_URL: str = "http://localhost:8000"
 
+    # ── Telegram Webhook (single-service deployment) ──────────────────────────
+    TELEGRAM_WEBHOOK_URL: str = ""      # e.g. https://your-app.onrender.com/api/v1/telegram/webhook
+    TELEGRAM_WEBHOOK_SECRET: str = ""   # random string, also sent to setWebhook
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
